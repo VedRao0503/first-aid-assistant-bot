@@ -84,8 +84,10 @@ def analyze_intent(user_text):
         "message": "Emergency intent not recognized. Please choose a chip or state the situation clearly (e.g., 'bleeding', 'CPR'). <strong>If critical, call 108 immediately.</strong>"
     }
 
-@app.route('/chat', methods=['POST'])
-def chat():
+# Accept any route pattern forwarded by Vercel
+@app.route('/', defaults={'path': ''}, methods=['GET', 'POST'])
+@app.route('/<path:path>', methods=['GET', 'POST'])
+def handle_chat(path):
     data = request.get_json(silent=True) or {}
     user_msg = data.get('message', '')
     return jsonify(analyze_intent(user_msg))
