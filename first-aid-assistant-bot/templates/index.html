@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>First-Aid Assistant UI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: #0f172a; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 10px; }
+        .chat-card {
+            width: 100%; max-width: 440px; height: 92vh; background: #1e293b;
+            border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column; overflow: hidden; border: 1px solid rgba(255,255,255,0.08);
+        }
+        .chat-header {
+            background: #0f172a; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .header-title { display: flex; flex-direction: column; }
+        .header-title h1 { color: #f8fafc; font-size: 1.05rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .status-badge { color: #10b981; font-size: 0.72rem; font-weight: 600; display: flex; align-items: center; gap: 5px; margin-top: 2px; }
+        .pulse-dot { width: 6px; height: 6px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981; animation: blink 1.5s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .call-btn {
+            background: #ef4444; color: white; text-decoration: none; font-weight: 700; font-size: 0.8rem;
+            padding: 8px 14px; border-radius: 12px; display: flex; align-items: center; gap: 6px;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4); transition: transform 0.2s, background 0.2s;
+        }
+        .call-btn:hover { background: #dc2626; transform: scale(1.03); }
+        .chat-box { flex: 1; padding: 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; background: #0f172a; }
+        .msg-row { display: flex; flex-direction: column; max-width: 85%; animation: fadeIn 0.25s ease-out; }
+        .msg-row.user { align-self: flex-end; }
+        .msg-row.bot { align-self: flex-start; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .msg-bubble { padding: 12px 16px; border-radius: 18px; font-size: 0.92rem; line-height: 1.5; color: #e2e8f0; }
+        .user .msg-bubble { background: #2563eb; color: white; border-bottom-right-radius: 4px; }
+        .bot .msg-bubble { background: #1e293b; border: 1px solid rgba(255,255,255,0.06); border-bottom-left-radius: 4px; }
+        .protocol-card { background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 12px; border-radius: 8px; margin-top: 6px; }
+        .protocol-title { font-weight: 700; color: #fca5a5; font-size: 0.95rem; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .protocol-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+        .protocol-list li { font-size: 0.88rem; color: #f1f5f9; display: flex; gap: 8px; }
+        .protocol-list li span { color: #f87171; font-weight: 700; }
+        .chips-container { padding: 10px 16px; background: #1e293b; display: flex; gap: 8px; overflow-x: auto; border-top: 1px solid rgba(255,255,255,0.05); }
+        .chips-container::-webkit-scrollbar { display: none; }
+        .chip {
+            background: #334155; color: #cbd5e1; border: none; padding: 7px 13px; border-radius: 20px;
+            font-size: 0.78rem; font-weight: 600; white-space: nowrap; cursor: pointer; transition: all 0.2s;
+        }
+        .chip:hover { background: #ef4444; color: white; }
+        .input-area { padding: 14px 16px; background: #1e293b; display: flex; gap: 10px; align-items: center; border-top: 1px solid rgba(255,255,255,0.08); }
+        .input-area input {
+            flex: 1; background: #0f172a; border: 1px solid #334155; color: white; padding: 12px 16px;
+            border-radius: 14px; font-size: 0.9rem; outline: none; transition: border-color 0.2s;
+        }
+        .input-area input:focus { border-color: #3b82f6; }
+        .send-btn {
+            background: #2563eb; color: white; border: none; width: 44px; height: 44px; border-radius: 14px;
+            display: flex; justify-content: center; align-items: center; cursor: pointer; transition: background 0.2s;
+        }
+        .send-btn:hover { background: #1d4ed8; }
+        .typing-indicator { display: flex; gap: 4px; padding: 6px 12px; align-items: center; }
+        .typing-dot { width: 6px; height: 6px; background: #64748b; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+<div class="chat-card">
+    <div class="chat-header">
+        <div class="header-title">
+            <h1>🚑 First-Aid Bot</h1>
+            <div class="status-badge"><div class="pulse-dot"></div> Medical Assistant Active</div>
+        </div>
+        <a href="tel:108" class="call-btn">📞 CALL 108</a>
+    </div>
+
+    <div class="chat-box" id="chatBox">
+        <div class="msg-row bot">
+            <div class="msg-bubble">
+                <strong>Emergency Triage System Ready.</strong><br>
+                Tap an emergency button below or type a condition (e.g., "choking", "CPR", "snake bite").
+            </div>
+        </div>
+    </div>
+
+    <div class="chips-container">
+        <button class="chip" onclick="sendQuickMsg('CPR')">🫀 CPR</button>
+        <button class="chip" onclick="sendQuickMsg('Choking')">🥩 Choking</button>
+        <button class="chip" onclick="sendQuickMsg('Severe Bleeding')">🩸 Bleeding</button>
+        <button class="chip" onclick="sendQuickMsg('Snake Bite')">🐍 Snake Bite</button>
+        <button class="chip" onclick="sendQuickMsg('Burns')">🔥 Burns</button>
+        <button class="chip" onclick="sendQuickMsg('Stroke')">🧠 Stroke</button>
+    </div>
+
+    <div class="input-area">
+        <input type="text" id="userInput" placeholder="Type medical emergency..." onkeypress="if(event.key === 'Enter') handleSend()">
+        <button class="send-btn" onclick="handleSend()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
+    </div>
+</div>
+
+<script>
+    const chatBox = document.getElementById('chatBox');
+    const userInput = document.getElementById('userInput');
+
+    function appendUserMessage(text) {
+        const row = document.createElement('div');
+        row.className = 'msg-row user';
+        row.innerHTML = `<div class="msg-bubble">${escapeHtml(text)}</div>`;
+        chatBox.appendChild(row);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function showTypingIndicator() {
+        const row = document.createElement('div');
+        row.className = 'msg-row bot';
+        row.id = 'typingIndicator';
+        row.innerHTML = `<div class="msg-bubble"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
+        chatBox.appendChild(row);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function removeTypingIndicator() {
+        const el = document.getElementById('typingIndicator');
+        if (el) el.remove();
+    }
+
+    function appendBotResponse(data) {
+        removeTypingIndicator();
+        const row = document.createElement('div');
+        row.className = 'msg-row bot';
+
+        let htmlContent = '';
+        if (data.type === 'protocol') {
+            let stepsHtml = data.steps.map((step, idx) => `<li><span>${idx + 1}.</span> ${step}</li>`).join('');
+            htmlContent = `
+                <div class="msg-bubble">
+                    <div class="protocol-card">
+                        <div class="protocol-title">🚨 ${data.title}</div>
+                        <ul class="protocol-list">${stepsHtml}</ul>
+                    </div>
+                </div>`;
+        } else {
+            htmlContent = `<div class="msg-bubble">${data.message}</div>`;
+        }
+
+        row.innerHTML = htmlContent;
+        chatBox.appendChild(row);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    async function handleSend() {
+        const text = userInput.value.trim();
+        if (!text) return;
+
+        appendUserMessage(text);
+        userInput.value = '';
+        showTypingIndicator();
+
+        try {
+            const res = await fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text })
+            });
+            const data = await res.json();
+            setTimeout(() => appendBotResponse(data), 300);
+        } catch (err) {
+            removeTypingIndicator();
+            appendBotResponse({
+                type: 'error',
+                message: '<strong>Connection Error.</strong> If this is an emergency, Call 108 directly!'
+            });
+        }
+    }
+
+    function sendQuickMsg(text) {
+        userInput.value = text;
+        handleSend();
+    }
+
+    function escapeHtml(text) {
+        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+</script>
+
+</body>
+</html>
